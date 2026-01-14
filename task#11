@@ -1,0 +1,233 @@
+import streamlit as st
+import json
+import os
+import hashlib
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE = os.path.join(BASE_DIR, "gig_data.json")
+def hash_password(pw):
+    return hashlib.sha256(pw.encode()).hexdigest()
+def load_data():
+    if not os.path.exists(DATA_FILE):
+        return {"users": [], "gigs": []}
+    try:
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        st.error("Data file corrupted")
+        st.exception(e)
+        return {"users": [], "gigs": []}
+
+def save_data(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+def register(username, password, skills):
+    data = load_data()
+    if any(u["username"] == username for u in data["users"]):
+        return False
+
+    data["users"].append({
+        "username": username,
+        "password": hash_password(password),
+        "skills": skills,
+        "portfolio": []
+    })
+    save_data(data)
+    return True
+
+def login(username, password):
+    data = load_data()
+    pw = hash_password(password)
+    for u in data["users"]:
+        if u["username"] == username and u["password"] == pw:
+            return u["username"]
+    return None
+
+def get_user(username):
+    data = load_data()
+    return next((u for u in data["users"] if u["username"] == username), None)
+def register(username, password, skills):
+    data = load_data()
+    if any(u["username"] == username for u in data["users"]):
+        return False
+
+    data["users"].append({
+        "username": username,
+        "password": hash_password(password),
+        "skills": skills,
+        "portfolio": []
+    })
+    save_data(data)
+    return True
+
+def login(username, password):
+    data = load_data()
+    pw = hash_password(password)
+    for u in data["users"]:
+        if u["username"] == username and u["password"] == pw:
+            return u["username"]
+    return None
+
+def get_user(username):
+    data = load_data()
+    return next((u for u in data["users"] if u["username"] == username), None)
+def register(username, password, skills):
+    data = load_data()
+    if any(u["username"] == username for u in data["users"]):
+        return False
+
+    data["users"].append({
+        "username": username,
+        "password": hash_password(password),
+        "skills": skills,
+        "portfolio": []
+    })
+    save_data(data)
+    return True
+
+def login(username, password):
+    data = load_data()
+    pw = hash_password(password)
+    for u in data["users"]:
+        if u["username"] == username and u["password"] == pw:
+            return u["username"]
+    return None
+
+def get_user(username):
+    data = load_data()
+    return next((u for u in data["users"] if u["username"] == username), None)
+def register(username, password, skills):
+    data = load_data()
+    if any(u["username"] == username for u in data["users"]):
+        return False
+
+    data["users"].append({
+        "username": username,
+        "password": hash_password(password),
+        "skills": skills,
+        "portfolio": []
+    })
+    save_data(data)
+    return True
+
+def login(username, password):
+    data = load_data()
+    pw = hash_password(password)
+    for u in data["users"]:
+        if u["username"] == username and u["password"] == pw:
+            return u["username"]
+    return None
+
+def get_user(username):
+    data = load_data()
+    return next((u for u in data["users"] if u["username"] == username), None)
+def register(username, password, skills):
+    data = load_data()
+    if any(u["username"] == username for u in data["users"]):
+        return False
+
+    data["users"].append({
+        "username": username,
+        "password": hash_password(password),
+        "skills": skills,
+        "portfolio": []
+    })
+    save_data(data)
+    return True
+
+def login(username, password):
+    data = load_data()
+    pw = hash_password(password)
+    for u in data["users"]:
+        if u["username"] == username and u["password"] == pw:
+            return u["username"]
+    return None
+
+def get_user(username):
+    data = load_data()
+    return next((u for u in data["users"] if u["username"] == username), None)
+def register(username, password, skills):
+    data = load_data()
+    if any(u["username"] == username for u in data["users"]):
+        return False
+
+    data["users"].append({
+        "username": username,
+        "password": hash_password(password),
+        "skills": skills,
+        "portfolio": []
+    })
+    save_data(data)
+    return True
+
+def login(username, password):
+    data = load_data()
+    pw = hash_password(password)
+    for u in data["users"]:
+        if u["username"] == username and u["password"] == pw:
+            return u["username"]
+    return None
+
+def get_user(username):
+    data = load_data()
+    return next((u for u in data["users"] if u["username"] == username), None)
+if "user" not in st.session_state:
+    st.session_state.user = None
+st.sidebar.title("UniGigs")
+
+if st.session_state.user:
+    st.sidebar.success(f"Logged in as {st.session_state.user}")
+    if st.sidebar.button("Logout"):
+        st.session_state.user = None
+        st.rerun()
+
+    nav = st.sidebar.radio(
+        "Menu",
+        ["Gig Board", "My Gigs (Client)", "My Work (Freelancer)", "Profile"]
+    )
+else:
+    nav = "Login"
+    st.sidebar.info("Login required")
+if nav == "Login":
+    st.title("UniGigs")
+
+    tab1, tab2 = st.tabs(["Login", "Register"])
+
+    with tab1:
+        u = st.text_input("Username")
+        p = st.text_input("Password", type="password")
+        if st.button("Login"):
+            user = login(u, p)
+            if user:
+                st.session_state.user = user
+                st.success("Login successful")
+                st.rerun()
+            else:
+                st.error("Wrong credentials")
+
+    with tab2:
+        u = st.text_input("New Username")
+        p = st.text_input("New Password", type="password")
+        s = st.text_input("Skills (comma separated)")
+        if st.button("Register"):
+            if register(u, p, s):
+                st.success("Registered. Login now.")
+            else:
+                st.error("Username already exists")
+def place_bid(gig_id, bidder, price, time_est):
+    if not price or not time_est:
+        return False
+
+    data = load_data()
+    for g in data["gigs"]:
+        if g["id"] == gig_id:
+            if any(b["bidder"] == bidder for b in g["bids"]):
+                return False
+            g["bids"].append({
+                "bidder": bidder,
+                "price": price.strip(),
+                "time": time_est.strip()
+            })
+            save_data(data)
+            return True
+    return False
