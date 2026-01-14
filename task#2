@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Price Comparison App</title>
+  <style>
+    body { font-family: Arial; background: #f4f4f4; padding: 30px; }
+    .container { max-width: 700px; margin: auto; background: white; padding: 20px; }
+    input, button { width: 100%; padding: 10px; margin-top: 10px; }
+    .product { border-bottom: 1px solid #ddd; padding: 10px 0; }
+    .best { background: #d4edda; padding: 10px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🛒 E-Commerce Price Comparison</h2>
+
+  <input type="text" id="query" placeholder="Search product (e.g. phone)">
+  <button onclick="searchProduct()">Search</button>
+
+  <div id="results"></div>
+</div>
+
+<script>
+async function searchProduct() {
+  const query = document.getElementById("query").value.toLowerCase();
+  const resultsDiv = document.getElementById("results");
+  resultsDiv.innerHTML = "Loading...";
+
+  let products = [];
+
+  const fsRes = await fetch("https://fakestoreapi.com/products");
+  const fsData = await fsRes.json();
+  fsData.forEach(p => {
+    if (p.title.toLowerCase().includes(query)) {
+      products.push({
+        name: p.title,
+        price: p.price,
+        site: "FakeStore"
+      });
+    }
+  });
+
+  const djRes = await fetch(`https://dummyjson.com/products/search?q=${query}`);
+  const djData = await djRes.json();
+  djData.products.forEach(p => {
+    products.push({
+      name: p.title,
+      price: p.price,
+      site: "DummyJSON"
+    });
+  });
+
+  const mockStore = [
+    { name: "iPhone 13", price: 850, site: "LocalMart" },
+    { name: "Samsung Phone", price: 620, site: "LocalMart" }
+  ];
+  mockStore.forEach(p => {
+    if (p.name.toLowerCase().includes(query)) {
+      products.push(p);
+    }
+  });
+
+  if (products.length === 0) {
+    resultsDiv.innerHTML = "No products found.";
+    return;
+  }
+
+
+  resultsDiv.innerHTML = "<h3>Results</h3>";
+  products.forEach(p => {
+    resultsDiv.innerHTML += `
+      <div class="product">
+        <b>${p.name}</b><br>
+        Price: $${p.price} <br>
+        Website: ${p.site}
+      </div>
+    `;
+  });
+
+  const best = products.reduce((min, p) => p.price < min.price ? p : min);
+  resultsDiv.innerHTML += `
+    <div class="best">
+      <h3>Best Price</h3>
+      ${best.name}<br>
+      $${best.price} from <b>${best.site}</b>
+    </div>
+  `;
+}
+</script>
+
+</body>
+</html>
