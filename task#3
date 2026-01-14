@@ -1,0 +1,79 @@
+import pytesseract
+import cv2
+from PIL import Image
+
+def extract_text(image_path):
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    text = pytesseract.image_to_string(gray)
+    return text
+import re
+from datetime import datetime
+
+def parse_receipt(text):
+    date_pattern = r'\d{2}/\d{2}/\d{4}'
+    amount_pattern = r'TOTAL\s*[:\-]?\s*([\d,.]+)'
+
+    date = re.search(date_pattern, text)
+    amount = re.search(amount_pattern, text, re.IGNORECASE)
+
+    return {
+        "date": datetime.strptime(date.group(), "%d/%m/%Y") if date else None,
+        "amount": float(amount.group(1).replace(',', '')) if amount else 0.0
+    }
+import pandas as pd
+
+expenses = pd.DataFrame(columns=["date", "amount", "category"])
+def categorize(text):
+    if "food" in text.lower():
+        return "Food"
+    if "uber" in text.lower():
+        return "Transport"
+    return "Other"
+def monthly_summary(df):
+    df["month"] = df["date"].dt.to_period("M")
+    return df.groupby("month")["amount"].sum()
+def category_summary(df):
+    return df.groupby("category")["amount"].sum()
+def spending_alert(df, limit=10000):
+    total = df["amount"].sum()
+    return total > limit
+import matplotlib.pyplot as plt
+
+def plot_category(df):
+    summary = category_summary(df)
+    summary.plot(kind="bar", title="Spending by Category")
+    plt.show()
+import streamlit as st
+
+st.title("📊 Smart Receipt Analyzer")
+
+uploaded = st.file_uploader("Upload Receipt", type=["jpg", "png"])
+
+if uploaded:
+    with open("temp.jpg", "wb") as f:
+        f.write(uploaded.getbuffer())
+
+    text = extract_text("temp.jpg")
+    parsed = parse_receipt(text)
+    category = categorize(text)
+
+    st.write("Extracted Text:", text)
+    st.write("Parsed Data:", parsed)
+
+    if parsed["date"]:
+        expenses.loc[len(expenses)] = [
+            parsed["date"],
+            parsed["amount"],
+            category
+        ]
+
+if not expenses.empty:
+    st.subheader("Monthly Summary")
+    st.write(monthly_summary(expenses))
+
+    st.subheader("Category Analytics")
+    st.write(category_summary(expenses))
+
+    if spending_alert(expenses):
+        st.warning("⚠ Spending limit exceeded!")
