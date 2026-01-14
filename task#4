@@ -1,0 +1,100 @@
+import json
+import requests
+import os
+
+DATA_FILE = "cart_store.json"
+API_URL = "https://fakestoreapi.com/products?limit=5"
+
+def load_data():
+    if os.path.isfile(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_data(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=2)
+
+def fetch_products():
+    response = requests.get(API_URL)
+    response.raise_for_status()
+    return response.json()
+
+def display_products(products):
+    print("\nAvailable Products:")
+    for item in products:
+        print(f"[{item['id']}] {item['title'][:25]} | ${item['price']}")
+
+def add_to_cart(cart, product, qty):
+    pid = str(product["id"])
+    if pid in cart:
+        cart[pid]["quantity"] += qty
+    else:
+        cart[pid] = {
+            "title": product["title"],
+            "price": product["price"],
+            "quantity": qty
+        }
+
+def view_cart(cart):
+    print("\n--- Cart Summary ---")
+    if not cart:
+        print("Cart is empty.")
+        return
+
+    total = 0
+    for item in cart.values():
+        subtotal = item["price"] * item["quantity"]
+        total += subtotal
+        print(f"{item['title'][:25]} | Qty: {item['quantity']} | ${subtotal:.2f}")
+
+    print(f"\nTotal Cost: ${total:.2f}")
+
+def main():
+    cart = load_data()
+
+    while True:
+        print("\nOptions:")
+        print("1. View Products")
+        print("2. View Cart")
+        print("3. Remove Item")
+        print("4. Exit")
+
+        choice = input("Select option: ")
+
+        if choice == "1":
+            products = fetch_products()
+            display_products(products)
+
+            pid = input("Enter Product ID: ")
+            qty = int(input("Quantity: "))
+
+            product = next((p for p in products if str(p["id"]) == pid), None)
+            if product:
+                add_to_cart(cart, product, qty)
+                save_data(cart)
+                print("Item added to cart.")
+            else:
+                print("Invalid product ID.")
+
+        elif choice == "2":
+            view_cart(cart)
+
+        elif choice == "3":
+            pid = input("Enter Product ID to remove: ")
+            if pid in cart:
+                del cart[pid]
+                save_data(cart)
+                print("Item removed.")
+            else:
+                print("Item not found.")
+
+        elif choice == "4":
+            print("Goodbye.")
+            break
+
+        else:
+            print("Invalid option.")
+
+if __name__ == "__main__":
+    main()
